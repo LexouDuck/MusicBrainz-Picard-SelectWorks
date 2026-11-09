@@ -1,77 +1,89 @@
 # Classical Works — Picard 3 plugin
 
-Tags classical tracks around the **MusicBrainz work** instead of the release:
+Tags classical music around the **MusicBrainz work** rather than the release
+it was recorded on.
 
-| Tag | Becomes | Example |
+## Tagging files from a work (right-click)
+
+1. Drag your files into Picard. Leave them unmatched (in *Unclustered Files*
+   or a cluster).
+2. Select the files of one work (or the cluster), right-click →
+   **Find MusicBrainz work…**
+3. The search is pre-filled from the files' tags, or from their folders
+   (`<Composer>/<Work>/file` or `<Composer>/file`). Edit it and press
+   **Search** if needed. You can also paste a MusicBrainz work link.
+4. Click the right work in the list. The plugin loads its movements and
+   guesses which movement each file is (from roman/arabic numbers, movement
+   names, track numbers, or file order). Correct any guess in the **Tag as**
+   column. *Whole work* is for a file containing the complete piece.
+5. **Apply tags**, check the result in Picard's metadata panel, then **Save**.
+
+Nothing is written to disk until you save, so you can review the changes
+first.
+
+Tips:
+- MusicBrainz work titles follow the original language and its conventions:
+  search "Symphony 5" or "Ballade 1" with the composer, rather than a full
+  title.
+- If a search shows both a work and its movements, pick the work; picking a
+  single movement tags the file as that movement.
+- For operas, search for the act or the number directly when you want
+  numbered tracks within an act.
+
+## Automatic retagging of releases
+
+When files are matched to a MusicBrainz release (via **Scan** or **Lookup**)
+and the release's recordings are linked to works, each track is retagged the
+same way when the release loads. The original release values are kept in
+`release_album`, `release_artist`, `releasedate`, `release_tracknumber`, etc.
+
+This needs **Options → Metadata → "Use track relationships"**.
+
+## Tags written
+
+| Tag | Value | Example |
 |---|---|---|
-| `album`, `work` | top-level work | Symphony no. 5 in C minor, op. 67 |
-| `title`, `movement` | movement, work prefix stripped | II. Andante con moto |
-| `artist`, `albumartist` (+ sort, `artists`, MBIDs) | composer(s) | Ludwig van Beethoven |
+| `album`, `work` | work | Symphony no. 5 in C minor, op. 67 |
+| `title`, `movement` | movement (work prefix stripped) | II. Andante con moto |
+| `artist`, `albumartist`, `composer` (+ sort names, MBIDs) | composer(s) | Ludwig van Beethoven |
 | `date` | composition year (completed) | 1808 |
-| `compositiondate` | full composition range | 1804–1808 |
-| `genre`, `worktype` | MusicBrainz work type | Symphony |
-| `key` | work "Key" attribute | C minor |
-| `opus` | catalogue number found in the work title | op. 67 |
-| `work_catalogue` | catalogue series the work belongs to | Beethoven: Opus numbers Op. 67 |
+| `compositiondate` | composition years | 1804–1808 |
+| `genre`, `worktype` | work type | Symphony |
+| `key` | key | C minor |
+| `opus` | catalogue number from the work title | op. 67 |
+| `work_catalogue` | catalogue series | Beethoven: Opus numbers Op. 67 |
 | `tracknumber` / `totaltracks` | movement number / count | 2 / 4 |
 | `movementnumber` / `movementtotal` / `showmovement` | same, for players that use them | 2 / 4 / 1 |
-| `musicbrainz_parentworkid` | MBID of the album-level work | |
+| `musicbrainz_workid`, `musicbrainz_parentworkid` | work MBIDs | |
 
-Before overwriting, the release values are copied to `release_album`,
-`release_artist`, `release_albumartist`, `releasedate`, `release_tracknumber`,
-`release_discnumber`, `release_title`, `release_genre`, etc. Performer,
-conductor and orchestra tags written by Picard are left alone.
+Values MusicBrainz doesn't have (often the composition date or key) are left
+as they were.
 
-Tracks whose recording is not linked to a work in MusicBrainz are not changed.
+## Requirements and install
 
-## Requirements
-
-- Picard **3.0.3 or newer** (earlier 3.0.x releases could hang an album forever
-  when a plugin used a blocking album task — PICARD-3513).
-- **Options → Metadata → "Use track relationships"** must be on, otherwise the
-  release data contains no work links (the plugin logs a warning).
-
-## Install
-
-Picard 3 installs plugins from a git repository (a local one is fine):
-
-```bash
-cd classical_works
-git init && git add . && git commit -m "Classical Works 0.1.0"
-picard-cli plugins install "$(pwd)" --yes
-```
-
-Then restart Picard and enable it under Options → Plugins.
+- Picard **3.0.3 or newer**.
+- Install: Options → Plugins → Install Plugin… → local tab → path to this
+  folder (it is a git repository, as Picard 3 requires).
 
 ## Settings
 
-There is no options page yet: edit the `SETTINGS` dict at the top of
-`__init__.py`, commit, and run `picard-cli plugins update classical_works`
-(or reinstall). The main ones:
+Edit the `SETTINGS` dict in `works.py`, then `git commit -am "settings"` in
+this folder and update the plugin in Picard (Picard installs the committed
+version, not the files on disk):
 
 - `album_level`: `"top"` (the opera) or `"parent"` (the act).
 - `date_from`: `"end"` (year completed) or `"begin"` (year started).
-- `title_locale`: e.g. `"fr"` to use French work titles when MusicBrainz has a
-  French alias (costs one extra request per track).
+- `title_locale`: e.g. `"fr"` to use French work titles where MusicBrainz has
+  them.
 - `set_artist`, `set_date`, `set_genre`, `set_key`, `title_from_work`,
   `set_track_numbers`, `keep_release_info`: turn individual changes off.
 
-## Things to know
+## Troubleshooting
 
-- **Speed.** Picard limits MusicBrainz to about one request per second. The
-  plugin needs one request per distinct parent work (four movements of a
-  symphony = one request) or one per track for standalone pieces. Results are
-  cached until Picard restarts.
-- **Coverage depends on MusicBrainz data.** Composition dates live on the
-  composer relationship and are often missing; keys are often missing on
-  less-catalogued works. Missing fields are simply left as Picard set them.
-- **File naming.** If your naming script uses `%album%`/`%albumartist%`, files
-  will now be organised by composer/work. Use `%release_album%` etc. to keep
-  release-based folders.
-- **`musicbrainz_albumid` is not changed** (Picard needs it to reload the
-  release). Players that group albums by that ID rather than by the album tag
-  will still show the whole release as one album.
-- **Multi-level works** (opera → act → number): `album` is the opera, `title`
-  keeps the act prefix ("acte I: no. 2 …"), and the release track numbering is
-  kept since there is no single movement number.
-- Recordings linked to several works (medleys, pot-pourris) use the first work.
+Help → View Error/Debug Log; the plugin's lines mention "Classical Works".
+
+## Files
+
+- `works.py`: settings, MusicBrainz parsing and lookups, tag building.
+- `action.py`, `dialog.py`: the right-click action and its window.
+- `release.py`: automatic retagging when a release loads.
