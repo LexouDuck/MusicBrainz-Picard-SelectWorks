@@ -1,0 +1,25 @@
+uuid = "2d6303bc-65e0-45d9-b92c-8f63ad14a687"
+name = "Classical Works"
+description = "Tags classical tracks around the MusicBrainz work: composer as artist, work as album, composition date, key, opus, genre."
+api = ["3.0"]
+version = "0.1.0"
+license = "GPL-2.0-or-later"
+license_url = "https://www.gnu.org/licenses/gpl-2.0.html"
+categories = ["metadata"]
+long_description = """
+Re-centres track metadata on the musical work instead of the recorded release.
+For every track linked to a MusicBrainz work, the plugin walks up the
+part-of-work chain (movement -> work) and sets:
+
+- album = top-level work title (e.g. "Symphony no. 5 in C minor, op. 67")
+- title / movement = movement title with the work prefix stripped
+- artist / albumartist = composer(s)
+- date = composition year (from the composer relationship dates)
+- genre = work type (Symphony, Sonata, Concerto...)
+- key = musical key work attribute
+- opus = catalogue number parsed from the work title
+- tracknumber / totaltracks = movement number within the work
+
+The original release values are kept in release_* tags.
+Requires "Use track relationships" (Options > Metadata). Picard 3.0.3 or newer.
+"""
